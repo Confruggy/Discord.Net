@@ -39,9 +39,33 @@ namespace Discord
             }
         }
 
-        public Uri Url { get => _embed.Url; set { _embed.Url = value; } }
-        public Uri ThumbnailUrl { get => _embed.Thumbnail?.Url; set { _embed.Thumbnail = new EmbedThumbnail(value, null, null, null); } }
-        public Uri ImageUrl { get => _embed.Image?.Url; set { _embed.Image = new EmbedImage(value, null, null, null); } }
+        public string Url
+        {
+            get => _embed.Url;
+            set
+            {
+                if (!value.IsNullOrUri()) throw new ArgumentException("Url must be a well-formed URI", nameof(Url));
+                _embed.Url = value;
+            }
+        }
+        public string ThumbnailUrl
+        {
+            get => _embed.Thumbnail?.Url;
+            set
+            {
+                if (!value.IsNullOrUri()) throw new ArgumentException("Url must be a well-formed URI", nameof(ThumbnailUrl));
+                _embed.Thumbnail = new EmbedThumbnail(value, null, null, null);
+            }
+        }
+        public string ImageUrl
+        {
+            get => _embed.Image?.Url;
+            set
+            {
+                if (!value.IsNullOrUri()) throw new ArgumentException("Url must be a well-formed URI", nameof(ImageUrl));
+                _embed.Image = new EmbedImage(value, null, null, null);
+            }
+        }
         public DateTimeOffset? Timestamp { get => _embed.Timestamp; set { _embed.Timestamp = value; } }
         public Color? Color { get => _embed.Color; set { _embed.Color = value; } }
 
@@ -70,17 +94,17 @@ namespace Discord
             Description = description;
             return this;
         }
-        public EmbedBuilder WithUrl(Uri url)
+        public EmbedBuilder WithUrl(string url)
         {
             Url = url;
             return this;
         }
-        public EmbedBuilder WithThumbnailUrl(Uri thumbnailUrl)
+        public EmbedBuilder WithThumbnailUrl(string thumbnailUrl)
         {
             ThumbnailUrl = thumbnailUrl;
             return this;
         }
-        public EmbedBuilder WithImageUrl(Uri imageUrl)
+        public EmbedBuilder WithImageUrl(string imageUrl)
         {
             ImageUrl = imageUrl;
             return this;
@@ -113,6 +137,17 @@ namespace Discord
             Author = author;
             return this;
         }
+        public EmbedBuilder WithAuthor(string name, string iconUrl = null, string url = null)
+        {
+            var author = new EmbedAuthorBuilder
+            {
+                Name = name,
+                IconUrl = iconUrl,
+                Url = url
+            };
+            Author = author;
+            return this;
+        }
         public EmbedBuilder WithFooter(EmbedFooterBuilder footer)
         {
             Footer = footer;
@@ -122,6 +157,16 @@ namespace Discord
         {
             var footer = new EmbedFooterBuilder();
             action(footer);
+            Footer = footer;
+            return this;
+        }
+        public EmbedBuilder WithFooter(string text, string iconUrl = null)
+        {
+            var footer = new EmbedFooterBuilder
+            {
+                Text = text,
+                IconUrl = iconUrl
+            };
             Footer = footer;
             return this;
         }
@@ -161,6 +206,17 @@ namespace Discord
             this.AddField(field);
             return this;
         }
+        public EmbedBuilder AddField(string title, string text, bool inline = false)
+        {
+            var field = new EmbedFieldBuilder
+            {
+                Name = title,
+                Value = text,
+                IsInline = inline
+            };
+            _fields.Add(field);
+            return this;
+        }
 
         public Embed Build()
         {
@@ -193,7 +249,7 @@ namespace Discord
             get => _field.Name;
             set
             {
-                if (string.IsNullOrEmpty(value)) throw new ArgumentException($"Field name must not be null or empty.", nameof(Name));
+                if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException($"Field name must not be null, empty or entirely whitespace.", nameof(Name));
                 if (value.Length > MaxFieldNameLength) throw new ArgumentException($"Field name length must be less than or equal to {MaxFieldNameLength}.", nameof(Name));
                 _field.Name = value;
             }
@@ -204,7 +260,7 @@ namespace Discord
             get => _field.Value;
             set
             {
-                var stringValue = value.ToString();
+                var stringValue = value?.ToString();
                 if (string.IsNullOrEmpty(stringValue)) throw new ArgumentException($"Field value must not be null or empty.", nameof(Value));
                 if (stringValue.Length > MaxFieldValueLength) throw new ArgumentException($"Field value length must be less than or equal to {MaxFieldValueLength}.", nameof(Value));
                 _field.Value = stringValue;
@@ -252,8 +308,24 @@ namespace Discord
                 _author.Name = value;
             }
         }
-        public Uri Url { get => _author.Url; set { _author.Url = value; } }
-        public Uri IconUrl { get => _author.IconUrl; set { _author.IconUrl = value; } }
+        public string Url
+        {
+            get => _author.Url;
+            set
+            {
+                if (!value.IsNullOrUri()) throw new ArgumentException("Url must be a well-formed URI", nameof(Url));
+                _author.Url = value;
+            }
+        }
+        public string IconUrl
+        {
+            get => _author.IconUrl;
+            set
+            {
+                if (!value.IsNullOrUri()) throw new ArgumentException("Url must be a well-formed URI", nameof(IconUrl));
+                _author.IconUrl = value;
+            }
+        }
 
         public EmbedAuthorBuilder()
         {
@@ -265,12 +337,12 @@ namespace Discord
             Name = name;
             return this;
         }
-        public EmbedAuthorBuilder WithUrl(Uri url)
+        public EmbedAuthorBuilder WithUrl(string url)
         {
             Url = url;
             return this;
         }
-        public EmbedAuthorBuilder WithIconUrl(Uri iconUrl)
+        public EmbedAuthorBuilder WithIconUrl(string iconUrl)
         {
             IconUrl = iconUrl;
             return this;
@@ -295,7 +367,15 @@ namespace Discord
                 _footer.Text = value;
             }
         }
-        public Uri IconUrl { get => _footer.IconUrl; set { _footer.IconUrl = value; } }
+        public string IconUrl
+        {
+            get => _footer.IconUrl;
+            set
+            {
+                if (!value.IsNullOrUri()) throw new ArgumentException("Url must be a well-formed URI", nameof(IconUrl));
+                _footer.IconUrl = value;
+            }
+        }
 
         public EmbedFooterBuilder()
         {
@@ -307,7 +387,7 @@ namespace Discord
             Text = text;
             return this;
         }
-        public EmbedFooterBuilder WithIconUrl(Uri iconUrl)
+        public EmbedFooterBuilder WithIconUrl(string iconUrl)
         {
             IconUrl = iconUrl;
             return this;
