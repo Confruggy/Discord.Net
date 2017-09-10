@@ -54,7 +54,6 @@ namespace Discord.WebSocket
         public string SplashId { get; private set; }
 
         public DateTimeOffset CreatedAt => SnowflakeUtils.FromSnowflake(Id);
-        public SocketTextChannel DefaultChannel => GetTextChannel(Id);
         public string IconUrl => CDN.GetGuildIconUrl(Id, IconId);
         public string SplashUrl => CDN.GetGuildSplashUrl(Id, SplashId);
         public bool HasAllMembers => MemberCount == DownloadedMemberCount;// _downloaderPromise.Task.IsCompleted;
@@ -62,6 +61,10 @@ namespace Discord.WebSocket
         public Task SyncPromise => _syncPromise.Task;
         public Task DownloaderPromise => _downloaderPromise.Task;
         public IAudioClient AudioClient => _audioClient;
+        public SocketTextChannel DefaultChannel => TextChannels
+            .Where(c => CurrentUser.GetPermissions(c).ReadMessages)
+            .OrderBy(c => c.Position)
+            .FirstOrDefault();
         public SocketVoiceChannel AFKChannel
         {
             get
@@ -157,8 +160,6 @@ namespace Discord.WebSocket
                 {
                     if (members.TryGetValue(model.Presences[i].User.Id, out SocketGuildUser member))
                         member.Update(state, model.Presences[i], true);
-                    else
-                        Debug.Assert(false);
                 }
             }
             _members = members;
@@ -242,8 +243,6 @@ namespace Discord.WebSocket
                 {
                     if (members.TryGetValue(model.Presences[i].User.Id, out SocketGuildUser member))
                         member.Update(state, model.Presences[i], true);
-                    else
-                        Debug.Assert(false);
                 }
             }
             _members = members;
@@ -606,7 +605,7 @@ namespace Discord.WebSocket
         ulong? IGuild.AFKChannelId => AFKChannelId;
         IAudioClient IGuild.AudioClient => null;
         bool IGuild.Available => true;
-        ulong IGuild.DefaultChannelId => Id;
+        ulong IGuild.DefaultChannelId => DefaultChannel?.Id ?? 0;
         ulong? IGuild.EmbedChannelId => EmbedChannelId;
         IRole IGuild.EveryoneRole => EveryoneRole;
         IReadOnlyCollection<IRole> IGuild.Roles => Roles;
